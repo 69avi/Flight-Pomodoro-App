@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Focus Flight Pomodoro</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="flight-video-overlay" id="flightVideoOverlay" aria-hidden="true">
+      <video id="flightVideo" muted playsinline></video>
+      <span id="flightVideoLabel">Taking off</span>
+    </div>
+    <main class="app-shell" data-theme="dark">
+      <header class="topbar">
+        <button class="ghost-button" id="endButton" type="button">End</button>
+        <div class="flight-title">
+          <span id="flightStatus">Boarding</span>
+          <strong>Focus Flight</strong>
+        </div>
+        <div class="toolbar">
+          <button class="tool-button" id="themeButton" type="button">Light</button>
+          <button class="tool-button" id="audioButton" type="button">Audio</button>
+          <button class="tool-button" id="fullscreenButton" type="button">Fullscreen</button>
+          <button class="tool-button" id="mapButton" type="button">Hide Map</button>
+          <button class="tool-button" id="pureButton" type="button">Pure</button>
+          <button class="primary-button" id="pauseButton" type="button">Start</button>
+        </div>
+      </header>
+
+      <nav class="tab-nav" aria-label="Flight setup steps">
+        <button class="tab-button is-active" type="button" data-tab-target="airportTab">1 Airport</button>
+        <button class="tab-button" type="button" data-tab-target="routeTab">2 Destination</button>
+        <button class="tab-button" type="button" data-tab-target="boardingTab">3 Boarding Pass</button>
+        <button class="tab-button" type="button" data-tab-target="flightTab">4 Focus Flight</button>
+        <button class="tab-button" type="button" data-tab-target="progressTab">Progress</button>
+        <button class="tab-button" type="button" data-tab-target="privateJetTab">Private Jet</button>
+      </nav>
+
+      <section class="tab-page is-active" id="airportTab">
+      <section class="welcome-panel" aria-label="Flight setup">
+        <div>
+          <p class="eyebrow">Home airport setup</p>
+          <h1>Prepare your focus departure</h1>
+          <p class="welcome-copy">Choose a home airport, pick a destination, reserve your seat, then board when you are ready to focus.</p>
+          <ol class="setup-steps">
+            <li><span>1</span>Set home airport</li>
+            <li><span>2</span>Choose focus destination</li>
+            <li><span>3</span>Board and start the timer</li>
+          </ol>
+        </div>
+        <div class="welcome-actions">
+          <button class="primary-button" id="homeHubButton" type="button">Use Delhi Hub</button>
+          <button class="tool-button" id="manualRouteButton" type="button">Manual Route</button>
+        </div>
+      </section>
+
+      <section class="airline-panel" aria-label="Choose airline">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Airline livery</p>
+            <h2>Choose your carrier</h2>
+          </div>
+          <span class="level-pill" id="privateUnlockLabel">Private jet locked</span>
+        </div>
+        <div class="airline-grid" id="airlineGrid"></div>
+      </section>
+
+      <section class="booking-strip">
+        <label class="field">
+          <span>Boarding</span>
+          <select id="originSelect"></select>
+        </label>
+        <button class="swap-button" id="swapButton" type="button" aria-label="Swap route">&harr;</button>
+        <label class="field">
+          <span>Landing</span>
+          <select id="destinationSelect"></select>
+        </label>
+        <label class="field compact">
+          <span>Seat</span>
+          <select id="seatSelect"></select>
+        </label>
+        <label class="field compact">
+          <span>Avatar</span>
+          <select id="avatarSelect">
+            <option value="pilot">Pilot</option>
+            <option value="traveler">Traveler</option>
+            <option value="creator">Creator</option>
+          </select>
+        </label>
+      </section>
+      <div class="step-actions">
+        <button class="primary-button" id="continueToRouteButton" type="button">Continue to Destinations</button>
+      </div>
+      </section>
+
+      <section class="tab-page" id="privateJetTab">
+        <section class="private-jet-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Private terminal</p>
+              <h2>Choose a private jet destination</h2>
+            </div>
+            <span class="level-pill" id="privateJetStatus">Locked</span>
+          </div>
+          <p class="welcome-copy" id="privateJetCopy">Complete three focus flights of 2 hours or more to unlock private jet routes.</p>
+          <div class="destination-grid" id="privateDestinationGrid"></div>
+        </section>
+      </section>
+
+      <section class="tab-page" id="routeTab">
+      <section class="planning-grid">
+        <div class="planning-panel destination-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Destination board</p>
+              <h2>Pick a focus route</h2>
+            </div>
+            <span class="level-pill" id="levelPill">Runway Level 1</span>
+          </div>
+          <div class="route-progress">
+            <div class="route-progress-fill" id="routeProgressFill"></div>
+          </div>
+          <div class="progress-caption">
+            <span id="sessionsLabel">Completed 0 focus flights</span>
+            <span id="unlockLabel">3 flights unlock long-haul routes</span>
+          </div>
+          <div class="destination-grid" id="destinationGrid"></div>
+          <div class="duration-card">
+            <div>
+              <span id="routeTier">Regional Focus</span>
+              <strong id="recommendedMinutes">-- min</strong>
+            </div>
+            <p id="routeNote">Recommended from your selected route.</p>
+          </div>
+          <aside class="flight-time-card" aria-label="Selected flight time">
+            <p class="eyebrow">Flight time</p>
+            <strong id="routeTimeSummary">--</strong>
+            <span id="routeDistanceSummary">-- km</span>
+            <div class="time-row"><span>From</span><b id="routeFromSummary">--</b></div>
+            <div class="time-row"><span>To</span><b id="routeToSummary">--</b></div>
+            <div class="time-row"><span>Focus timer</span><b id="routeFocusSummary">--</b></div>
+          </aside>
+        </div>
+
+        <div class="planning-panel seat-purpose-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Cabin mode</p>
+              <h2>Pick your seat purpose</h2>
+            </div>
+          </div>
+          <div class="purpose-grid" id="purposeGrid"></div>
+          <div class="pre-seat-section">
+            <div class="section-head compact-head">
+              <div>
+                <p class="eyebrow">Seat selection</p>
+                <h2>Reserve before boarding</h2>
+              </div>
+              <span class="level-pill" id="preBookedSeat">Seat 3A</span>
+            </div>
+            <div class="pre-seat-map" id="preSeatMap"></div>
+          </div>
+        </div>
+      </section>
+      <div class="step-actions">
+        <button class="primary-button" id="continueToPassButton" type="button">Review Boarding Pass</button>
+      </div>
+      </section>
+
+      <section class="tab-page" id="boardingTab">
+      <section class="boarding-card" aria-label="Boarding pass details">
+        <div class="boarding-card-main">
+          <p class="eyebrow">Boarding pass</p>
+          <div class="boarding-route">
+            <strong id="passRoute">LHR -> FRA</strong>
+            <span id="passCities">London to Frankfurt</span>
+          </div>
+          <dl class="pass-list">
+            <div><dt>Seat mode</dt><dd id="passMode">Work</dd></div>
+            <div><dt>Focus duration</dt><dd id="passDuration">-- min</dd></div>
+            <div><dt>Distance</dt><dd id="passDistance">-- km</dd></div>
+          </dl>
+          <label class="field focus-label-field">
+            <span id="focusLabelPrompt">Work name</span>
+            <input id="focusLabelInput" type="text" placeholder="Deep work, math, science..." />
+          </label>
+        </div>
+        <div class="boarding-perforation" aria-hidden="true"></div>
+        <div class="boarding-card-stub">
+          <strong id="passFlight">Flight FF 204</strong>
+          <dl class="pass-list compact-pass">
+            <div><dt>Boarding</dt><dd id="passBoarding">--:--</dd></div>
+            <div><dt>Takeoff</dt><dd id="passTakeoff">--:--</dd></div>
+            <div><dt>Seat #</dt><dd id="passSeat">3A</dd></div>
+            <div><dt>Gate</dt><dd id="passGate">A4</dd></div>
+          </dl>
+          <button class="primary-button" id="boardButton" type="button">Board Flight</button>
+        </div>
+      </section>
+      </section>
+
+      <section class="tab-page" id="progressTab">
+        <section class="progress-panel">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Weekly report</p>
+              <h2>Focus progress by subject and work</h2>
+            </div>
+            <span class="level-pill" id="weekRangeLabel">This week</span>
+          </div>
+          <div class="progress-summary" id="progressSummary"></div>
+          <div class="progress-graph" id="progressGraph"></div>
+          <div class="insight-grid">
+            <div><span>Improved</span><strong id="improvedInsight">--</strong></div>
+            <div><span>Needs attention</span><strong id="attentionInsight">--</strong></div>
+            <div><span>Aced</span><strong id="acedInsight">--</strong></div>
+          </div>
+        </section>
+      </section>
+
+      <section class="tab-page" id="flightTab">
+      <section class="dashboard">
+        <div class="map-panel">
+          <div id="map"></div>
+          <div class="route-fallback" id="routeFallback">
+            <div class="route-line">
+              <span id="fallbackOrigin">LHR</span>
+              <span class="plane-glyph">&#9992;</span>
+              <span id="fallbackDestination">FRA</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="cabin-panel">
+          <div class="window-row"><span></span><span></span><span></span></div>
+          <div class="seat-map" id="seatMap"></div>
+          <div class="boarding-pass">
+            <div><span>Flight</span><strong id="flightCode">FF 204</strong></div>
+            <div><span>Booked Seat</span><strong id="bookedSeat">3A</strong></div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="timer-section">
+        <div class="live-flight-card">
+          <div>
+            <span>Selected route</span>
+            <strong id="liveRouteSummary">--</strong>
+          </div>
+          <div>
+            <span>Total flight focus</span>
+            <strong id="liveTotalSummary">--</strong>
+          </div>
+          <div>
+            <span>Airborne progress</span>
+            <strong id="liveProgressSummary">0%</strong>
+          </div>
+        </div>
+        <div class="timer-display" id="timerDisplay">00:00</div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+          <div class="progress-plane" id="progressPlane">&#9992;</div>
+        </div>
+        <div class="flight-meta">
+          <span id="phaseLabel">Phase: Boarding</span>
+          <span id="distanceLabel">Distance: --</span>
+          <span id="etaLabel">ETA: --</span>
+        </div>
+        <div class="break-panel">
+          <button class="tool-button" id="washroomButton" type="button">Washroom Break</button>
+          <span id="breakStatus">Available after boarding</span>
+          <span id="wakeStatus">Screen awake: off</span>
+        </div>
+      </section>
+      </section>
+    </main>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
